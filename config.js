@@ -1,8 +1,8 @@
 // Hardcoded credentials
 const config = {
-  apiKey: "sk-1234567890abcdefghijklmnopqrstuvwxyz",
-  dbPassword: "admin_password_123",
-  jwtSecret: "my-super-secret-jwt-key-12345"
+  apiKey: process.env.STRIPE_API_KEY,
+  dbPassword: process.env.DB_PASSWORD,
+  jwtSecret: process.env.JWT_SECRET
 };
 
 module.exports = config;
