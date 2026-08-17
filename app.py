@@ -32,7 +32,9 @@ def get_user():
     cursor = conn.cursor()
     
     # VULNERABLE: SQL injection via string concatenation
-    query = "SELECT * FROM users WHERE id = " + user_id
+    query = "SELECT * FROM users WHERE id = ?"
+    cursor.execute(query, (user_id,))
+// KAVACH-FIX: SQL Injection
     cursor.execute(query)
     
     result = cursor.fetchall()
@@ -49,7 +51,8 @@ def ping_host():
     host = request.args.get('host')
     
     # VULNERABLE: command injection via os.system()
-    result = os.system("ping -c 1 " + host)
+    result = subprocess.run(['ping', '-c', '1', host], capture_output=True, text=True)
+// KAVACH-FIX: Command Injection
     
     return jsonify({'status': 'pinged', 'exit_code': result})
 
@@ -65,7 +68,9 @@ def register_user():
     password = data.get('password')
     
     # VULNERABLE: MD5 is cryptographically broken
-    hashed = hashlib.md5(password.encode()).hexdigest()
+    import bcrypt
+    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+// KAVACH-FIX: Weak Cryptography - MD5
     
     conn = get_db()
     cursor = conn.cursor()
@@ -88,4 +93,5 @@ def health():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=False)
+// KAVACH-FIX: Avoid App Run With Bad Host and Debug Enabled
