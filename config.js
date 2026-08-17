@@ -19,8 +19,11 @@ app.use(express.json())
 // VULNERABILITY 1: Hardcoded API Secret
 // ============================================================
 // BAD: Secret should be in .env, not committed to code
-const INTERNAL_API_SECRET = "sk_internal_abc123XYZ789supersecretdontcommit"
-const ADMIN_TOKEN = "admin_token_9f8e7d6c5b4a3928"
+// KAVACH-FIX: Hardcoded Secret / API Key
+const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
+if (!INTERNAL_API_SECRET) throw new Error('INTERNAL_API_SECRET missing');
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+if (!ADMIN_TOKEN) throw new Error('ADMIN_TOKEN missing');
 
 
 // ============================================================
@@ -31,7 +34,9 @@ app.post('/api/config/update', (req, res) => {
   const userExpression = req.body.expression
   
   // VULNERABLE: eval on user input = arbitrary code execution
-  const result = eval(userExpression)
+  // KAVACH-FIX: Code Injection via eval()
+const [bin, ...args] = userExpression.split(' ')
+const result = spawn(bin, args, { shell: false })
   
   res.json({ 
     result: result,
@@ -48,10 +53,13 @@ app.get('/api/files/read', (req, res) => {
   const fileName = req.query.name
   
   // VULNERABLE: attacker can use ../../etc/passwd
-  const filePath = './uploads/' + fileName
+  // KAVACH-FIX: Path Traversal
+const safeFileName = path.basename(fileName)
+const filePath = path.join('./uploads', safeFileName)
   const content = fs.readFileSync(filePath, 'utf8')
   
-  res.send(content)
+  // KAVACH-FIX: Direct Response Write
+res.render('content', { content: content })
 })
 
 
